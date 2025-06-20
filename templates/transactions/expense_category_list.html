@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+
+{% block title %}Expense Categories - Personal Finance Tracker{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1>Expense Categories</h1>
+    </div>
+    <div class="col-md-4 text-end">
+        <a href="{% url 'expense_category_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>Add Expense Category
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        {% if expense_categories %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Monthly Budget</th>
+                            <th>Current Month Spent</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for category in expense_categories %}
+                            <tr>
+                                <td>
+                                    {{ category.name }}
+                                    {% if category.description %}
+                                        <i class="fas fa-info-circle text-muted ms-1" 
+                                           data-bs-toggle="tooltip" 
+                                           title="{{ category.description }}"></i>
+                                    {% endif %}
+                                </td>
+                                <td>${{ category.monthly_budget|floatformat:2 }}</td>
+                                <td>${{ category.current_month_expenses|floatformat:2 }}</td>
+                                <td>
+                                    <div class="progress" style="height: 10px;">
+                                        <div class="progress-bar {% if category.budget_status.percentage > 100 %}bg-danger{% elif category.budget_status.percentage > 75 %}bg-warning{% else %}bg-success{% endif %}" 
+                                             role="progressbar" 
+                                             style="width: {% if category.budget_status.percentage > 100 %}100{% else %}{{ category.budget_status.percentage }}{% endif %}%" 
+                                             aria-valuenow="{{ category.budget_status.percentage }}" 
+                                             aria-valuemin="0" 
+                                             aria-valuemax="100">
+                                        </div>
+                                    </div>
+                                    <small class="d-block mt-1 {% if category.budget_status.percentage > 100 %}text-danger{% elif category.budget_status.percentage > 75 %}text-warning{% else %}text-success{% endif %}">
+                                        {{ category.budget_status.percentage|floatformat:0 }}% of budget
+                                    </small>
+                                </td>
+                                <td>
+                                    <a href="{% url 'expense_category_edit' category.id %}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{% url 'expense_category_delete' category.id %}" class="btn btn-sm btn-outline-danger">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <p class="text-muted mb-3">You haven't added any expense categories yet.</p>
+                <a href="{% url 'expense_category_create' %}" class="btn btn-primary">Add Your First Expense Category</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        });
+    });
+</script>
+{% endblock %} 

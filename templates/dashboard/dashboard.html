@@ -1,0 +1,367 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Personal Finance Tracker{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stat-card {
+        border-radius: 12px;
+        transition: transform 0.3s, box-shadow 0.3s;
+        overflow: hidden;
+    }
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    }
+    .stat-icon {
+        height: 70px;
+        width: 70px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 15px;
+        transition: all 0.3s;
+    }
+    .stat-card:hover .stat-icon {
+        transform: scale(1.1);
+    }
+    .progress {
+        height: 10px;
+        border-radius: 6px;
+        overflow: hidden;
+        background-color: rgba(0, 0, 0, 0.05);
+    }
+    .progress-bar {
+        transition: width 1s ease-in-out;
+    }
+    .card-header {
+        border-bottom: none;
+    }
+    .budget-item, .savings-item {
+        padding: 12px;
+        border-radius: 10px;
+        margin-bottom: 15px;
+        background-color: rgba(0, 0, 0, 0.02);
+        transition: all 0.2s;
+    }
+    .budget-item:hover, .savings-item:hover {
+        background-color: rgba(0, 0, 0, 0.04);
+        transform: translateX(5px);
+    }
+    .table-hover tbody tr {
+        transition: all 0.2s;
+    }
+    .table-hover tbody tr:hover {
+        background-color: rgba(67, 97, 238, 0.05);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4 fw-bold">Financial Dashboard</h1>
+        <p class="text-muted mb-4">Welcome to your financial overview. Here's a snapshot of your current financial status.</p>
+    </div>
+</div>
+
+<!-- Summary Stats -->
+<div class="row">
+    <div class="col-md-4 mb-4">
+        <div class="card stat-card h-100 border-0 shadow-sm">
+            <div class="card-body text-center p-4">
+                <div class="stat-icon bg-primary-subtle mx-auto">
+                    <i class="fas fa-money-bill-wave fa-2x text-primary"></i>
+                </div>
+                <h5 class="card-title mb-2">Monthly Income</h5>
+                <h3 class="mb-0 fw-bold text-primary">${{ monthly_income|floatformat:2 }}</h3>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="card stat-card h-100 border-0 shadow-sm">
+            <div class="card-body text-center p-4">
+                <div class="stat-icon bg-danger-subtle mx-auto">
+                    <i class="fas fa-credit-card fa-2x text-danger"></i>
+                </div>
+                <h5 class="card-title mb-2">Monthly Expenses</h5>
+                <h3 class="mb-0 fw-bold text-danger">${{ monthly_expenses|floatformat:2 }}</h3>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="card stat-card h-100 border-0 shadow-sm">
+            <div class="card-body text-center p-4">
+                <div class="stat-icon bg-success-subtle mx-auto">
+                    <i class="fas fa-piggy-bank fa-2x text-success"></i>
+                </div>
+                <h5 class="card-title mb-2">Monthly Savings</h5>
+                <h3 class="mb-0 fw-bold {% if monthly_savings >= 0 %}text-success{% else %}text-danger{% endif %}">
+                    ${{ monthly_savings|floatformat:2 }}
+                </h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Budget Status -->
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-header bg-transparent py-3 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-bold"><i class="fas fa-chart-pie me-2 text-primary"></i>Budget Status</h5>
+                <a href="{% url 'budget_goal_list' %}" class="btn btn-sm btn-outline-primary rounded-pill">
+                    <i class="fas fa-arrow-right me-1"></i>View All
+                </a>
+            </div>
+            <div class="card-body p-4">
+                {% if budget_statuses %}
+                    {% for status in budget_statuses %}
+                        <div class="budget-item">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="fw-medium">{{ status.category }}</span>
+                                <span class="badge {% if status.percentage > 100 %}bg-danger{% elif status.percentage > 75 %}bg-warning{% else %}bg-success{% endif %} rounded-pill">
+                                    {{ status.percentage|floatformat:0 }}%
+                                </span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mb-2 small text-muted">
+                                <span>Spent: ${{ status.spent|floatformat:2 }}</span>
+                                <span>Budget: ${{ status.budget|floatformat:2 }}</span>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar {% if status.percentage > 100 %}bg-danger{% elif status.percentage > 75 %}bg-warning{% else %}bg-success{% endif %}" 
+                                     role="progressbar" 
+                                     style="width: {% if status.percentage > 100 %}100{% else %}{{ status.percentage }}{% endif %}%" 
+                                     aria-valuenow="{{ status.percentage }}" 
+                                     aria-valuemin="0" 
+                                     aria-valuemax="100">
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-chart-pie fa-3x text-muted mb-3"></i>
+                        <p class="text-muted mb-3">No budget categories found</p>
+                        <a href="{% url 'expense_category_create' %}" class="btn btn-primary rounded-pill">
+                            <i class="fas fa-plus me-2"></i>Create Category
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Expense Breakdown -->
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-header bg-transparent py-3 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-bold"><i class="fas fa-chart-pie me-2 text-primary"></i>Expense Breakdown</h5>
+            </div>
+            <div class="card-body p-4">
+                {% if charts_data.category_expenses %}
+                    <div style="height: 300px;">
+                        <canvas id="expenseChart"></canvas>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-chart-pie fa-3x text-muted mb-3"></i>
+                        <p class="text-muted mb-3">No expense data available</p>
+                        <a href="{% url 'transaction_create' %}" class="btn btn-primary rounded-pill">
+                            <i class="fas fa-plus me-2"></i>Add Transaction
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Recent Transactions -->
+    <div class="col-lg-8 mb-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-header bg-transparent py-3 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-bold"><i class="fas fa-exchange-alt me-2 text-primary"></i>Recent Transactions</h5>
+                <a href="{% url 'transaction_list' %}" class="btn btn-sm btn-outline-primary rounded-pill">
+                    <i class="fas fa-arrow-right me-1"></i>View All
+                </a>
+            </div>
+            <div class="card-body p-4">
+                {% if recent_transactions %}
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Description</th>
+                                    <th>Category</th>
+                                    <th>Amount</th>
+                                    <th>Type</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for transaction in recent_transactions %}
+                                    <tr>
+                                        <td>{{ transaction.date }}</td>
+                                        <td>{{ transaction.description|truncatechars:30 }}</td>
+                                        <td>
+                                            {% if transaction.transaction_type == 'income' %}
+                                                <span class="badge bg-light text-dark border">{{ transaction.income_source.name }}</span>
+                                            {% else %}
+                                                <span class="badge bg-light text-dark border">{{ transaction.expense_category.name }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="fw-medium {% if transaction.transaction_type == 'income' %}text-success{% else %}text-danger{% endif %}">
+                                            ${{ transaction.amount|floatformat:2 }}
+                                        </td>
+                                        <td>
+                                            {% if transaction.transaction_type == 'income' %}
+                                                <span class="badge bg-success rounded-pill">Income</span>
+                                            {% else %}
+                                                <span class="badge bg-danger rounded-pill">Expense</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-receipt fa-3x text-muted mb-3"></i>
+                        <p class="text-muted mb-3">No transactions found</p>
+                        <a href="{% url 'transaction_create' %}" class="btn btn-primary rounded-pill">
+                            <i class="fas fa-plus me-2"></i>Add Transaction
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Savings Goals -->
+    <div class="col-lg-4 mb-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-header bg-transparent py-3 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-bold"><i class="fas fa-piggy-bank me-2 text-primary"></i>Savings Goals</h5>
+                <a href="{% url 'savings_goal_list' %}" class="btn btn-sm btn-outline-primary rounded-pill">
+                    <i class="fas fa-arrow-right me-1"></i>View All
+                </a>
+            </div>
+            <div class="card-body p-4">
+                {% if savings_goals %}
+                    {% for goal in savings_goals %}
+                        <div class="savings-item">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="fw-medium">{{ goal.name }}</span>
+                                <span class="badge bg-info rounded-pill">{{ goal.get_progress_percentage|floatformat:0 }}%</span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mb-2 small text-muted">
+                                <span>Current: ${{ goal.current_amount|floatformat:2 }}</span>
+                                <span>Target: ${{ goal.target_amount|floatformat:2 }}</span>
+                            </div>
+                            <div class="progress mb-2">
+                                <div class="progress-bar bg-info" 
+                                     role="progressbar" 
+                                     style="width: {{ goal.get_progress_percentage|floatformat:0 }}%" 
+                                     aria-valuenow="{{ goal.get_progress_percentage }}" 
+                                     aria-valuemin="0" 
+                                     aria-valuemax="100">
+                                </div>
+                            </div>
+                            {% if goal.target_date %}
+                                <div class="small text-muted">
+                                    <i class="fas fa-calendar-alt me-1"></i>
+                                    Target date: {{ goal.target_date }} 
+                                    <span class="ms-2 badge {% if goal.days_remaining < 30 %}bg-danger{% elif goal.days_remaining < 90 %}bg-warning{% else %}bg-success{% endif %} rounded-pill">
+                                        {{ goal.days_remaining }} days left
+                                    </span>
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-piggy-bank fa-3x text-muted mb-3"></i>
+                        <p class="text-muted mb-3">No savings goals found</p>
+                        <a href="{% url 'savings_goal_create' %}" class="btn btn-primary rounded-pill">
+                            <i class="fas fa-plus me-2"></i>Create Goal
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Animate progress bars on page load
+        const progressBars = document.querySelectorAll('.progress-bar');
+        progressBars.forEach(function(bar) {
+            const width = bar.style.width;
+            bar.style.width = '0%';
+            setTimeout(function() {
+                bar.style.width = width;
+            }, 200);
+        });
+        
+        // Expense breakdown chart
+        const expenseData = {{ charts_data.category_expenses|safe }};
+        if (expenseData && expenseData.length > 0) {
+            const ctx = document.getElementById('expenseChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: expenseData.map(function(item) { return item.name; }),
+                    datasets: [{
+                        data: expenseData.map(function(item) { return item.value; }),
+                        backgroundColor: [
+                            '#4361ee', '#3a0ca3', '#4cc9f0', '#f72585', '#7209b7', 
+                            '#4895ef', '#560bad', '#f15bb5', '#fee440', '#00bbf9'
+                        ],
+                        borderWidth: 1,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '65%',
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                padding: 15,
+                                usePointStyle: true,
+                                pointStyle: 'circle'
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.raw || 0;
+                                    const total = context.dataset.data.reduce(function(a, b) { return a + b; }, 0);
+                                    const percentage = Math.round((value / total) * 100);
+                                    return label + ': $' + value.toFixed(2) + ' (' + percentage + '%)';
+                                }
+                            }
+                        }
+                    },
+                    animation: {
+                        animateScale: true,
+                        animateRotate: true
+                    }
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

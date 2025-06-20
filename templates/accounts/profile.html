@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+
+{% block title %}Your Profile - Personal Finance Tracker{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12 mb-4">
+        <h1 class="fw-bold">Your Profile</h1>
+        <p class="text-muted">Manage your personal information and account settings</p>
+    </div>
+    
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <div class="card-header bg-transparent py-3">
+                <h5 class="mb-0 fw-bold"><i class="fas fa-user-edit me-2"></i>Edit Profile Information</h5>
+            </div>
+            <div class="card-body p-4">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ user_form.first_name.id_for_label }}" class="form-label">{{ user_form.first_name.label }}</label>
+                                {{ user_form.first_name }}
+                                {% if user_form.first_name.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in user_form.first_name.errors %}
+                                            <i class="fas fa-exclamation-circle me-1"></i>{{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ user_form.last_name.id_for_label }}" class="form-label">{{ user_form.last_name.label }}</label>
+                                {{ user_form.last_name }}
+                                {% if user_form.last_name.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in user_form.last_name.errors %}
+                                            <i class="fas fa-exclamation-circle me-1"></i>{{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ user_form.email.id_for_label }}" class="form-label">{{ user_form.email.label }}</label>
+                        {{ user_form.email }}
+                        {% if user_form.email.errors %}
+                            <div class="text-danger small mt-1">
+                                {% for error in user_form.email.errors %}
+                                    <i class="fas fa-exclamation-circle me-1"></i>{{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ profile_form.phone_number.id_for_label }}" class="form-label">Phone Number</label>
+                        {{ profile_form.phone_number }}
+                        {% if profile_form.phone_number.errors %}
+                            <div class="text-danger small mt-1">
+                                {% for error in profile_form.phone_number.errors %}
+                                    <i class="fas fa-exclamation-circle me-1"></i>{{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="{{ profile_form.profile_picture.id_for_label }}" class="form-label">Profile Picture</label>
+                        {{ profile_form.profile_picture }}
+                        <div class="form-text small">
+                            <i class="fas fa-info-circle me-1"></i>Upload a square image for best results
+                        </div>
+                        {% if profile_form.profile_picture.errors %}
+                            <div class="text-danger small mt-1">
+                                {% for error in profile_form.profile_picture.errors %}
+                                    <i class="fas fa-exclamation-circle me-1"></i>{{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header bg-transparent py-3">
+                <h5 class="mb-0 fw-bold"><i class="fas fa-info-circle me-2"></i>Account Information</h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="text-center mb-4">
+                    {% if user.profile.profile_picture %}
+                        <img src="{{ user.profile.profile_picture.url }}" alt="Profile Picture" class="img-fluid rounded-circle shadow" style="width: 150px; height: 150px; object-fit: cover;">
+                    {% else %}
+                        <div class="rounded-circle bg-gradient d-flex align-items-center justify-content-center mx-auto shadow" style="width: 150px; height: 150px; background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));">
+                            <span class="text-white display-4 fw-bold">{{ user.first_name|first|upper }}{{ user.last_name|first|upper }}</span>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="list-group list-group-flush">
+                    <div class="list-group-item border-0 px-0">
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted"><i class="fas fa-user me-2"></i>Username</span>
+                            <span class="fw-medium">{{ user.username }}</span>
+                        </div>
+                    </div>
+                    <div class="list-group-item border-0 px-0">
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted"><i class="fas fa-id-card me-2"></i>Full Name</span>
+                            <span class="fw-medium">{{ user.first_name }} {{ user.last_name }}</span>
+                        </div>
+                    </div>
+                    <div class="list-group-item border-0 px-0">
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted"><i class="fas fa-envelope me-2"></i>Email</span>
+                            <span class="fw-medium">{{ user.email }}</span>
+                        </div>
+                    </div>
+                    {% if user.profile.phone_number %}
+                    <div class="list-group-item border-0 px-0">
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted"><i class="fas fa-phone me-2"></i>Phone</span>
+                            <span class="fw-medium">{{ user.profile.phone_number }}</span>
+                        </div>
+                    </div>
+                    {% endif %}
+                    <div class="list-group-item border-0 px-0">
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted"><i class="fas fa-calendar-alt me-2"></i>Date Joined</span>
+                            <span class="fw-medium">{{ user.date_joined|date:"F j, Y" }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

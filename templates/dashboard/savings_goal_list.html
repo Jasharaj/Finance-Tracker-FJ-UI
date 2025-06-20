@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+
+{% block title %}Savings Goals - Personal Finance Tracker{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1>Savings Goals</h1>
+    </div>
+    <div class="col-md-4 text-end">
+        <a href="{% url 'savings_goal_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>Add Savings Goal
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    {% if savings_goals %}
+        {% for goal in savings_goals %}
+            <div class="col-lg-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5 class="mb-0">{{ goal.name }}</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="text-center mb-4">
+                            <div class="position-relative d-inline-block">
+                                <svg width="150" height="150" viewBox="0 0 150 150">
+                                    <!-- Background circle -->
+                                    <circle cx="75" cy="75" r="60" fill="none" stroke="#e9ecef" stroke-width="15" />
+                                    
+                                    <!-- Progress arc - We're using a JavaScript solution instead of the sub filter -->
+                                    <circle cx="75" cy="75" r="60" fill="none" stroke="#0dcaf0" stroke-width="15"
+                                            stroke-dasharray="377"
+                                            stroke-dashoffset="377" 
+                                            transform="rotate(-90 75 75)"
+                                            class="progress-circle"
+                                            data-percentage="{{ goal.get_progress_percentage|floatformat:0 }}" />
+                                </svg>
+                                <div class="position-absolute top-50 start-50 translate-middle">
+                                    <div class="fs-2 fw-bold">{{ goal.get_progress_percentage|floatformat:0 }}%</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span>Current Amount:</span>
+                            <span class="fw-bold">${{ goal.current_amount|floatformat:2 }}</span>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span>Target Amount:</span>
+                            <span class="fw-bold">${{ goal.target_amount|floatformat:2 }}</span>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span>Remaining:</span>
+                            {% with remaining=goal.target_amount|floatformat:2 %}
+                            <span class="fw-bold text-info remaining-amount" 
+                                  data-target="{{ goal.target_amount|floatformat:2 }}" 
+                                  data-current="{{ goal.current_amount|floatformat:2 }}">
+                                Calculating...
+                            </span>
+                            {% endwith %}
+                        </div>
+                        
+                        {% if goal.target_date %}
+                            <div class="d-flex justify-content-between align-items-center text-muted small">
+                                <span>Target Date:</span>
+                                <span>{{ goal.target_date }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center text-muted small">
+                                <span>Days Remaining:</span>
+                                <span>{{ goal.days_remaining }}</span>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="card-footer d-flex justify-content-end">
+                        <a href="{% url 'savings_goal_edit' goal.id %}" class="btn btn-sm btn-outline-primary me-2">
+                            <i class="fas fa-edit me-1"></i>Edit
+                        </a>
+                        <a href="{% url 'savings_goal_delete' goal.id %}" class="btn btn-sm btn-outline-danger">
+                            <i class="fas fa-trash me-1"></i>Delete
+                        </a>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body text-center py-5">
+                    <p class="text-muted mb-3">You haven't set up any savings goals yet.</p>
+                    <a href="{% url 'savings_goal_create' %}" class="btn btn-primary">Create Your First Savings Goal</a>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Update the progress circles
+        document.querySelectorAll('.progress-circle').forEach(function(circle) {
+            const percentage = parseFloat(circle.getAttribute('data-percentage'));
+            const circumference = 377; // 2 * π * radius
+            const dashOffset = circumference - (circumference * percentage / 100);
+            circle.style.strokeDashoffset = dashOffset;
+        });
+        
+        // Calculate remaining amounts
+        document.querySelectorAll('.remaining-amount').forEach(function(elem) {
+            const target = parseFloat(elem.getAttribute('data-target'));
+            const current = parseFloat(elem.getAttribute('data-current'));
+            const remaining = (target - current).toFixed(2);
+            elem.textContent = '$' + remaining;
+        });
+    });
+</script>
+{% endblock %} 

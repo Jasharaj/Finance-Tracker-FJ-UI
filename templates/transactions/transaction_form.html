@@ -1,0 +1,202 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    {% if transaction %}Edit Transaction{% else %}Add Transaction{% endif %} - Personal Finance Tracker
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="fw-bold">{% if transaction %}Edit Transaction{% else %}Add Transaction{% endif %}</h1>
+        <p class="text-muted">{% if transaction %}Update the details of your existing transaction{% else %}Record a new financial transaction{% endif %}</p>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-transparent py-3">
+        <h5 class="mb-0 fw-bold">
+            <i class="fas {% if transaction %}fa-edit{% else %}fa-plus-circle{% endif %} me-2 text-primary"></i>
+            Transaction Details
+        </h5>
+    </div>
+    <div class="card-body p-4">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label for="{{ form.transaction_type.id_for_label }}" class="form-label fw-medium">Transaction Type</label>
+                        {{ form.transaction_type }}
+                        {% if form.transaction_type.errors %}
+                            <div class="text-danger small mt-1">
+                                <i class="fas fa-exclamation-circle me-1"></i>
+                                {% for error in form.transaction_type.errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label for="{{ form.amount.id_for_label }}" class="form-label fw-medium">Amount</label>
+                        {{ form.amount }}
+                        {% if form.amount.errors %}
+                            <div class="text-danger small mt-1">
+                                <i class="fas fa-exclamation-circle me-1"></i>
+                                {% for error in form.amount.errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label for="{{ form.date.id_for_label }}" class="form-label fw-medium">Date</label>
+                        {{ form.date }}
+                        {% if form.date.errors %}
+                            <div class="text-danger small mt-1">
+                                <i class="fas fa-exclamation-circle me-1"></i>
+                                {% for error in form.date.errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-6" id="income_source_container">
+                    <div class="form-group mb-3">
+                        <label for="{{ form.income_source.id_for_label }}" class="form-label fw-medium">Income Source</label>
+                        {{ form.income_source }}
+                        {% if form.income_source.errors %}
+                            <div class="text-danger small mt-1">
+                                <i class="fas fa-exclamation-circle me-1"></i>
+                                {% for error in form.income_source.errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="mt-2 small">
+                            <a href="{% url 'income_source_create' %}" target="_blank" class="text-primary">
+                                <i class="fas fa-plus-circle me-1"></i>Add New Income Source
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6" id="expense_category_container">
+                    <div class="form-group mb-3">
+                        <label for="{{ form.expense_category.id_for_label }}" class="form-label fw-medium">Expense Category</label>
+                        {{ form.expense_category }}
+                        {% if form.expense_category.errors %}
+                            <div class="text-danger small mt-1">
+                                <i class="fas fa-exclamation-circle me-1"></i>
+                                {% for error in form.expense_category.errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="mt-2 small">
+                            <a href="{% url 'expense_category_create' %}" target="_blank" class="text-primary">
+                                <i class="fas fa-plus-circle me-1"></i>Add New Expense Category
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-group mb-4">
+                <label for="{{ form.description.id_for_label }}" class="form-label fw-medium">Description</label>
+                {{ form.description }}
+                {% if form.description.errors %}
+                    <div class="text-danger small mt-1">
+                        <i class="fas fa-exclamation-circle me-1"></i>
+                        {% for error in form.description.errors %}{{ error }}{% endfor %}
+                    </div>
+                {% endif %}
+                <div class="form-text small">
+                    <i class="fas fa-info-circle me-1"></i>Provide a clear description of this transaction
+                </div>
+            </div>
+            
+            <div class="form-group mb-4">
+                <label for="{{ form.receipt.id_for_label }}" class="form-label fw-medium">Receipt (Optional)</label>
+                {% if transaction and transaction.receipt %}
+                    <div class="mb-3">
+                        <a href="{{ transaction.receipt.url }}" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill">
+                            <i class="fas fa-file-alt me-1"></i>View Current Receipt
+                        </a>
+                    </div>
+                {% endif %}
+                {{ form.receipt }}
+                {% if form.receipt.errors %}
+                    <div class="text-danger small mt-1">
+                        <i class="fas fa-exclamation-circle me-1"></i>
+                        {% for error in form.receipt.errors %}{{ error }}{% endfor %}
+                    </div>
+                {% endif %}
+                <div class="form-text small mt-2">
+                    <i class="fas fa-info-circle me-1"></i>Upload a receipt image or PDF (max 5MB)
+                </div>
+            </div>
+            
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        <div>
+                            {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+            
+            <div class="d-flex justify-content-between mt-4">
+                <a href="{% url 'transaction_list' %}" class="btn btn-outline-secondary rounded-pill">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Transactions
+                </a>
+                <button type="submit" class="btn btn-primary rounded-pill">
+                    <i class="fas {% if transaction %}fa-save{% else %}fa-plus{% endif %} me-2"></i>
+                    {% if transaction %}Update{% else %}Save{% endif %} Transaction
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const transactionTypeSelect = document.getElementById('transaction_type');
+        const incomeSourceContainer = document.getElementById('income_source_container');
+        const expenseCategoryContainer = document.getElementById('expense_category_container');
+        
+        function updateFieldsVisibility() {
+            if (transactionTypeSelect.value === 'income') {
+                incomeSourceContainer.style.display = 'block';
+                expenseCategoryContainer.style.display = 'none';
+            } else if (transactionTypeSelect.value === 'expense') {
+                incomeSourceContainer.style.display = 'none';
+                expenseCategoryContainer.style.display = 'block';
+            } else {
+                incomeSourceContainer.style.display = 'block';
+                expenseCategoryContainer.style.display = 'block';
+            }
+        }
+        
+        // Add animation to form fields
+        const formGroups = document.querySelectorAll('.form-group');
+        formGroups.forEach((group, index) => {
+            group.style.opacity = '0';
+            group.style.transform = 'translateY(20px)';
+            group.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+            
+            setTimeout(() => {
+                group.style.opacity = '1';
+                group.style.transform = 'translateY(0)';
+            }, 100 + (index * 50));
+        });
+        
+        // Initial update
+        updateFieldsVisibility();
+        
+        // Event listener for changes
+        transactionTypeSelect.addEventListener('change', updateFieldsVisibility);
+    });
+</script>
+{% endblock %}

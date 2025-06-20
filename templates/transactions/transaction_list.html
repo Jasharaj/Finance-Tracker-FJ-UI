@@ -1,0 +1,242 @@
+{% extends 'base.html' %}
+
+{% block title %}Transactions - Personal Finance Tracker{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1 class="fw-bold">Transactions</h1>
+        <p class="text-muted">Manage and track all your financial transactions</p>
+    </div>
+    <div class="col-md-4 text-end">
+        <a href="{% url 'transaction_create' %}" class="btn btn-primary rounded-pill">
+            <i class="fas fa-plus me-2"></i>Add Transaction
+        </a>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="row mb-4">
+    <div class="col-md-4 mb-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="rounded-circle bg-success-subtle p-3 me-3">
+                        <i class="fas fa-arrow-up text-success"></i>
+                    </div>
+                    <h5 class="card-title mb-0">Income</h5>
+                </div>
+                <h3 class="text-success fw-bold">${{ income_total|floatformat:2 }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="rounded-circle bg-danger-subtle p-3 me-3">
+                        <i class="fas fa-arrow-down text-danger"></i>
+                    </div>
+                    <h5 class="card-title mb-0">Expenses</h5>
+                </div>
+                <h3 class="text-danger fw-bold">${{ expense_total|floatformat:2 }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="rounded-circle bg-primary-subtle p-3 me-3">
+                        <i class="fas fa-balance-scale text-primary"></i>
+                    </div>
+                    <h5 class="card-title mb-0">Balance</h5>
+                </div>
+                <h3 class="{% if balance >= 0 %}text-success{% else %}text-danger{% endif %} fw-bold">
+                    ${{ balance|floatformat:2 }}
+                </h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-transparent py-3">
+        <h5 class="mb-0 fw-bold"><i class="fas fa-filter me-2 text-primary"></i>Filters</h5>
+    </div>
+    <div class="card-body p-4">
+        <form method="get" class="row g-3">
+            <div class="col-md-3 col-sm-6">
+                <label class="form-label">Time Period</label>
+                <select name="date_filter" class="form-select">
+                    <option value="week" {% if date_filter == 'week' %}selected{% endif %}>This Week</option>
+                    <option value="month" {% if date_filter == 'month' %}selected{% endif %}>This Month</option>
+                    <option value="year" {% if date_filter == 'year' %}selected{% endif %}>This Year</option>
+                    <option value="all" {% if date_filter == 'all' %}selected{% endif %}>All Time</option>
+                </select>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <label class="form-label">Transaction Type</label>
+                <select name="type" class="form-select">
+                    <option value="">All Types</option>
+                    <option value="income" {% if transaction_type == 'income' %}selected{% endif %}>Income</option>
+                    <option value="expense" {% if transaction_type == 'expense' %}selected{% endif %}>Expense</option>
+                </select>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <label class="form-label">Category</label>
+                <select name="category" class="form-select">
+                    <option value="">All Categories</option>
+                    {% if transaction_type == 'income' or not transaction_type %}
+                        <optgroup label="Income Sources">
+                            {% for source in income_sources %}
+                                <option value="{{ source.id }}" {% if category_id == source.id|stringformat:"i" %}selected{% endif %}>
+                                    {{ source.name }}
+                                </option>
+                            {% endfor %}
+                        </optgroup>
+                    {% endif %}
+                    {% if transaction_type == 'expense' or not transaction_type %}
+                        <optgroup label="Expense Categories">
+                            {% for category in expense_categories %}
+                                <option value="{{ category.id }}" {% if category_id == category.id|stringformat:"i" %}selected{% endif %}>
+                                    {{ category.name }}
+                                </option>
+                            {% endfor %}
+                        </optgroup>
+                    {% endif %}
+                </select>
+            </div>
+            <div class="col-md-3 col-sm-6 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary me-2">
+                    <i class="fas fa-search me-2"></i>Apply Filters
+                </button>
+                <a href="{% url 'transaction_list' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-undo me-2"></i>Clear
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Transactions Table -->
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-transparent py-3 d-flex justify-content-between align-items-center">
+        <h5 class="mb-0 fw-bold"><i class="fas fa-list me-2 text-primary"></i>Transaction List</h5>
+        <div>
+            <a href="#" class="btn btn-sm btn-outline-secondary me-2">
+                <i class="fas fa-download me-1"></i>Export
+            </a>
+            <div class="btn-group">
+                <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fas fa-sort me-1"></i>Sort
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" href="?sort=date">Date (Newest First)</a></li>
+                    <li><a class="dropdown-item" href="?sort=date_asc">Date (Oldest First)</a></li>
+                    <li><a class="dropdown-item" href="?sort=amount">Amount (Highest First)</a></li>
+                    <li><a class="dropdown-item" href="?sort=amount_asc">Amount (Lowest First)</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="card-body p-4">
+        {% if transactions %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Date</th>
+                            <th>Description</th>
+                            <th>Category</th>
+                            <th>Amount</th>
+                            <th>Type</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for transaction in transactions %}
+                            <tr>
+                                <td>{{ transaction.date }}</td>
+                                <td>{{ transaction.description|truncatechars:30 }}</td>
+                                <td>
+                                    {% if transaction.transaction_type == 'income' %}
+                                        <span class="badge bg-light text-dark border">{{ transaction.income_source.name }}</span>
+                                    {% else %}
+                                        <span class="badge bg-light text-dark border">{{ transaction.expense_category.name }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="fw-medium {% if transaction.transaction_type == 'income' %}text-success{% else %}text-danger{% endif %}">
+                                    ${{ transaction.amount|floatformat:2 }}
+                                </td>
+                                <td>
+                                    {% if transaction.transaction_type == 'income' %}
+                                        <span class="badge bg-success rounded-pill">Income</span>
+                                    {% else %}
+                                        <span class="badge bg-danger rounded-pill">Expense</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end">
+                                    <a href="{% url 'transaction_edit' transaction.id %}" class="btn btn-sm btn-outline-primary rounded-pill me-1" data-bs-toggle="tooltip" title="Edit">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{% url 'transaction_delete' transaction.id %}" class="btn btn-sm btn-outline-danger rounded-pill" data-bs-toggle="tooltip" title="Delete">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-receipt fa-3x text-muted mb-3"></i>
+                <p class="mb-3 text-muted">No transactions found matching your filters.</p>
+                <a href="{% url 'transaction_create' %}" class="btn btn-primary rounded-pill">
+                    <i class="fas fa-plus me-2"></i>Add Your First Transaction
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize tooltips
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+        
+        // Get the type select element
+        const typeSelect = document.querySelector('select[name="type"]');
+        const categorySelect = document.querySelector('select[name="category"]');
+        
+        // Add event listener to the type select
+        typeSelect.addEventListener('change', function() {
+            // Get all category options
+            const incomeOptions = categorySelect.querySelector('optgroup[label="Income Sources"]');
+            const expenseOptions = categorySelect.querySelector('optgroup[label="Expense Categories"]');
+            
+            // Show/hide options based on the selected type
+            if (this.value === 'income') {
+                if (incomeOptions) incomeOptions.style.display = 'block';
+                if (expenseOptions) expenseOptions.style.display = 'none';
+            } else if (this.value === 'expense') {
+                if (incomeOptions) incomeOptions.style.display = 'none';
+                if (expenseOptions) expenseOptions.style.display = 'block';
+            } else {
+                if (incomeOptions) incomeOptions.style.display = 'block';
+                if (expenseOptions) expenseOptions.style.display = 'block';
+            }
+            
+            // Reset the category selection
+            categorySelect.value = '';
+        });
+    });
+</script>
+{% endblock %}

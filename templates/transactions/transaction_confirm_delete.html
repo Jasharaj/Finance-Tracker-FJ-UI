@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete Transaction - Personal Finance Tracker{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1>Delete Transaction</h1>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <p>Are you sure you want to delete the following transaction?</p>
+        
+        <div class="alert alert-info my-4">
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Date:</strong> {{ transaction.date }}</p>
+                    <p><strong>Type:</strong> {{ transaction.get_transaction_type_display }}</p>
+                    <p><strong>Amount:</strong> ${{ transaction.amount|floatformat:2 }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p>
+                        <strong>Category:</strong>
+                        {% if transaction.transaction_type == 'income' %}
+                            {{ transaction.income_source.name }}
+                        {% else %}
+                            {{ transaction.expense_category.name }}
+                        {% endif %}
+                    </p>
+                    <p><strong>Description:</strong> {{ transaction.description }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <form method="post">
+            {% csrf_token %}
+            <div class="d-flex justify-content-between">
+                <a href="{% url 'transaction_list' %}" class="btn btn-outline-secondary">Cancel</a>
+                <button type="submit" class="btn btn-danger">Delete Transaction</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %} 

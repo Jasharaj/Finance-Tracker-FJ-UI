@@ -1,0 +1,44 @@
+# Python virtual environment
+venv/
+env/
+ENV/
+.env
+
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+coverage.xml
+*.cover
+
+# Django specific
+*.log
+db.sqlite3
+db.sqlite3-journal
+local_settings.py
+media/
+
+# Development environment
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Environment variables
+.env
+
+# OS specific files
+.DS_Store
+Thumbs.db 

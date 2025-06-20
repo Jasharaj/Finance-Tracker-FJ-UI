@@ -1,0 +1,370 @@
+{% extends 'base.html' %}
+{% load report_filters %}
+
+{% block title %}{{ title }} - Personal Finance Tracker{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1>Financial Reports</h1>
+    </div>
+    <div class="col-md-4 text-end">
+        <button type="button" class="btn btn-primary" onclick="window.print()">
+            <i class="fas fa-print me-2"></i>Print Report
+        </button>
+    </div>
+</div>
+
+<!-- Report Filters -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">Report Options</h5>
+    </div>
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label">Report Type</label>
+                <select name="type" class="form-select" id="reportType">
+                    <option value="monthly" {% if request.GET.type == 'monthly' or not request.GET.type %}selected{% endif %}>Monthly</option>
+                    <option value="yearly" {% if request.GET.type == 'yearly' %}selected{% endif %}>Yearly</option>
+                    <option value="custom" {% if request.GET.type == 'custom' %}selected{% endif %}>Custom Date Range</option>
+                </select>
+            </div>
+            
+            <div class="col-md-3" id="monthSelection">
+                <label class="form-label">Month</label>
+                <select name="month" class="form-select">
+                    <option value="1" {% if request.GET.month == '1' or not request.GET.month and start_date.month == 1 %}selected{% endif %}>January</option>
+                    <option value="2" {% if request.GET.month == '2' or not request.GET.month and start_date.month == 2 %}selected{% endif %}>February</option>
+                    <option value="3" {% if request.GET.month == '3' or not request.GET.month and start_date.month == 3 %}selected{% endif %}>March</option>
+                    <option value="4" {% if request.GET.month == '4' or not request.GET.month and start_date.month == 4 %}selected{% endif %}>April</option>
+                    <option value="5" {% if request.GET.month == '5' or not request.GET.month and start_date.month == 5 %}selected{% endif %}>May</option>
+                    <option value="6" {% if request.GET.month == '6' or not request.GET.month and start_date.month == 6 %}selected{% endif %}>June</option>
+                    <option value="7" {% if request.GET.month == '7' or not request.GET.month and start_date.month == 7 %}selected{% endif %}>July</option>
+                    <option value="8" {% if request.GET.month == '8' or not request.GET.month and start_date.month == 8 %}selected{% endif %}>August</option>
+                    <option value="9" {% if request.GET.month == '9' or not request.GET.month and start_date.month == 9 %}selected{% endif %}>September</option>
+                    <option value="10" {% if request.GET.month == '10' or not request.GET.month and start_date.month == 10 %}selected{% endif %}>October</option>
+                    <option value="11" {% if request.GET.month == '11' or not request.GET.month and start_date.month == 11 %}selected{% endif %}>November</option>
+                    <option value="12" {% if request.GET.month == '12' or not request.GET.month and start_date.month == 12 %}selected{% endif %}>December</option>
+                </select>
+            </div>
+            
+            <div class="col-md-3" id="yearSelection">
+                <label class="form-label">Year</label>
+                <select name="year" class="form-select">
+                    {% now "Y" as current_year %}
+                    {% with start_year=current_year|add:"-3" end_year=current_year|add:"1" %}
+                    {% for year in start_year|get_range:end_year %}
+                    <option value="{{ year }}" {% if request.GET.year == year|stringformat:"i" or not request.GET.year and year == start_date.year %}selected{% endif %}>{{ year }}</option>
+                    {% endfor %}
+                    {% endwith %}
+                </select>
+            </div>
+            
+            <div class="col-md-3" id="startDateSelection" style="display: none;">
+                <label class="form-label">Start Date</label>
+                <input type="date" name="start_date" class="form-control" value="{{ request.GET.start_date|default:start_date|date:'Y-m-d' }}">
+            </div>
+            
+            <div class="col-md-3" id="endDateSelection" style="display: none;">
+                <label class="form-label">End Date</label>
+                <input type="date" name="end_date" class="form-control" value="{{ request.GET.end_date|default:end_date|date:'Y-m-d' }}">
+            </div>
+            
+            <div class="col-md-3 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary">Generate Report</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">{{ title }}</h4>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card bg-light mb-3">
+                            <div class="card-body text-center">
+                                <h5 class="card-title">Total Income</h5>
+                                <h3 class="text-success">${{ total_income|floatformat:2 }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-light mb-3">
+                            <div class="card-body text-center">
+                                <h5 class="card-title">Total Expenses</h5>
+                                <h3 class="text-danger">${{ total_expenses|floatformat:2 }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-light mb-3">
+                            <div class="card-body text-center">
+                                <h5 class="card-title">Net Savings</h5>
+                                <h3 class="{% if net_savings >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                    ${{ net_savings|floatformat:2 }}
+                                </h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="mb-0">Income Breakdown</h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container" style="position: relative; height: 300px;">
+                    <canvas id="incomeChart"></canvas>
+                </div>
+                
+                {% if income_by_source %}
+                <div class="table-responsive mt-3">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Source</th>
+                                <th class="text-end">Amount</th>
+                                <th class="text-end">Percentage</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for source in income_by_source %}
+                            <tr>
+                                <td>{{ source.name }}</td>
+                                <td class="text-end">${{ source.total|floatformat:2 }}</td>
+                                <td class="text-end">{{ source.total|percentage:total_income }}%</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <p class="text-muted">No income data available for this period.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="mb-0">Expense Breakdown</h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container" style="position: relative; height: 300px;">
+                    <canvas id="expenseChart"></canvas>
+                </div>
+                
+                {% if expense_by_category %}
+                <div class="table-responsive mt-3">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Category</th>
+                                <th class="text-end">Amount</th>
+                                <th class="text-end">Percentage</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for category in expense_by_category %}
+                            <tr>
+                                <td>{{ category.name }}</td>
+                                <td class="text-end">${{ category.total|floatformat:2 }}</td>
+                                <td class="text-end">{{ category.total|percentage:total_expenses }}%</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <p class="text-muted">No expense data available for this period.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Income/Expense Comparison -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">Monthly Comparison</h5>
+    </div>
+    <div class="card-body">
+        <div style="height: 400px;">
+            <canvas id="comparisonChart"></canvas>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Handle report type selection
+        const reportType = document.getElementById('reportType');
+        const monthSelection = document.getElementById('monthSelection');
+        const yearSelection = document.getElementById('yearSelection');
+        const startDateSelection = document.getElementById('startDateSelection');
+        const endDateSelection = document.getElementById('endDateSelection');
+        
+        reportType.addEventListener('change', function() {
+            if (this.value === 'monthly') {
+                monthSelection.style.display = 'block';
+                yearSelection.style.display = 'block';
+                startDateSelection.style.display = 'none';
+                endDateSelection.style.display = 'none';
+            } else if (this.value === 'yearly') {
+                monthSelection.style.display = 'none';
+                yearSelection.style.display = 'block';
+                startDateSelection.style.display = 'none';
+                endDateSelection.style.display = 'none';
+            } else if (this.value === 'custom') {
+                monthSelection.style.display = 'none';
+                yearSelection.style.display = 'none';
+                startDateSelection.style.display = 'block';
+                endDateSelection.style.display = 'block';
+            }
+        });
+        
+        // Trigger change event to set initial state
+        reportType.dispatchEvent(new Event('change'));
+        
+        // Set up charts if data is available
+        {% if charts_data.income %}
+        const incomeData = {{ charts_data.income|safe }};
+        const incomeCtx = document.getElementById('incomeChart').getContext('2d');
+        new Chart(incomeCtx, {
+            type: 'pie',
+            data: {
+                labels: incomeData.map(item => item.name),
+                datasets: [{
+                    data: incomeData.map(item => item.value),
+                    backgroundColor: [
+                        '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b',
+                        '#6f42c1', '#5a5c69', '#858796', '#20c9a6', '#3c34a1'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right'
+                    }
+                }
+            }
+        });
+        {% endif %}
+        
+        {% if charts_data.expenses %}
+        const expenseData = {{ charts_data.expenses|safe }};
+        const expenseCtx = document.getElementById('expenseChart').getContext('2d');
+        new Chart(expenseCtx, {
+            type: 'pie',
+            data: {
+                labels: expenseData.map(item => item.name),
+                datasets: [{
+                    data: expenseData.map(item => item.value),
+                    backgroundColor: [
+                        '#e74a3b', '#f6c23e', '#36b9cc', '#1cc88a', '#4e73df',
+                        '#6f42c1', '#5a5c69', '#858796', '#20c9a6', '#3c34a1'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right'
+                    }
+                }
+            }
+        });
+        {% endif %}
+        
+        // Comparison chart (mock data - replace with actual data)
+        const comparisonCtx = document.getElementById('comparisonChart').getContext('2d');
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        
+        // Use actual income/expense data if available, otherwise mock data
+        new Chart(comparisonCtx, {
+            type: 'bar',
+            data: {
+                labels: months,
+                datasets: [
+                    {
+                        label: 'Income',
+                        backgroundColor: 'rgba(28, 200, 138, 0.6)',
+                        borderColor: 'rgb(28, 200, 138)',
+                        borderWidth: 1,
+                        data: [
+                            {% if monthly_data %}
+                                {% for month_data in monthly_data %}
+                                    {{ month_data.income }},
+                                {% endfor %}
+                            {% else %}
+                                3200, 3500, 3700, 3800, 4100, 3900, 4000, 4200, 4300, 4100, 3900, 4500
+                            {% endif %}
+                        ]
+                    },
+                    {
+                        label: 'Expenses',
+                        backgroundColor: 'rgba(231, 74, 59, 0.6)',
+                        borderColor: 'rgb(231, 74, 59)',
+                        borderWidth: 1,
+                        data: [
+                            {% if monthly_data %}
+                                {% for month_data in monthly_data %}
+                                    {{ month_data.expenses }},
+                                {% endfor %}
+                            {% else %}
+                                2800, 3200, 3300, 3400, 3600, 3500, 3700, 3800, 3900, 3700, 3500, 4000
+                            {% endif %}
+                        ]
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return '$' + value;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %} 
